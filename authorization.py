@@ -1,3 +1,9 @@
+from fastapi import Depends, HTTPException, Request
+from sqlalchemy.orm import Session
+
+from database import get_db
+from models import User
+
 def can_read_document(user, document, permission=None) -> bool:
     if user is None or not user.is_active:
         return False
@@ -33,3 +39,26 @@ def can_manage_sharing(user, document) -> bool:
         return False
 
     return document.owner_id == user.id
+
+def get_current_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> User:
+    user_id = request.session.get("user_id")
+
+    if user_id is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Please log in",
+        )
+
+    user = db.get(User, user_id)
+
+    if user is None or not user.is_active:
+        request.session.clear()
+        raise HTTPException(
+            status_code=401,
+            detail="Please log in",
+        )
+
+    return user

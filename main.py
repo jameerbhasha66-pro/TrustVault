@@ -13,6 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from database import create_tables, get_db
 from models import User
 from security import hash_password, verify_password
+from documents import router as documents_router
 
 load_dotenv()
 
@@ -35,7 +36,7 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
-
+app.include_router(documents_router)
 app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET_KEY,
