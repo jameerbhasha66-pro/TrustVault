@@ -1,0 +1,501 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrustVault | Secure Documents</title>
+<style>
+:root {
+  --bg: #f5f7fb;
+  --ink: #17233d;
+  --muted: #718096;
+  --brand: #5145cd;
+  --line: #e5e9f2;
+  --white: #ffffff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: .6; cursor: wait; }
+header {
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+  padding: 18px 6%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.brand { font-size: 23px; font-weight: 800; }
+.brand span { color: var(--brand); }
+.tag { color: var(--muted); font-size: 13px; margin-top: 4px; }
+main { max-width: 1100px; margin: 36px auto; padding: 0 20px; }
+h1 { font-size: clamp(26px, 4vw, 36px); margin: 0 0 10px; }
+h2 { font-size: 19px; margin-top: 0; }
+p { line-height: 1.6; }
+.muted { color: var(--muted); }
+.card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 5px 22px #26345b08;
+}
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.stack { display: grid; gap: 14px; }
+input, select {
+  width: 100%;
+  border: 1px solid #d9dfeb;
+  border-radius: 9px;
+  padding: 12px;
+  background: white;
+  color: var(--ink);
+}
+label { font-size: 13px; font-weight: 650; display: block; margin-bottom: 7px; }
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 11px 16px;
+  background: var(--brand);
+  color: white;
+  font-weight: 650;
+}
+.secondary { background: #eeedff; color: var(--brand); }
+.ghost { background: transparent; color: var(--muted); }
+.danger { background: #fff0f0; color: #ba3434; }
+.small { padding: 8px 10px; font-size: 12px; }
+.hidden { display: none !important; }
+.notice {
+  margin: 18px 0;
+  padding: 12px 15px;
+  border-radius: 10px;
+  background: #eeedff;
+  color: #4338a9;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.notice.error { background: #fff0f0; color: #a12828; }
+.stat { font-size: 29px; font-weight: 800; margin-top: 8px; }
+.file { border-top: 1px solid var(--line); padding: 17px 0; }
+.file:last-child { padding-bottom: 0; }
+.file-name { font-weight: 700; overflow-wrap: anywhere; }
+.badge {
+  display: inline-block;
+  border-radius: 20px;
+  background: #eeedff;
+  color: var(--brand);
+  padding: 5px 9px;
+  font-size: 12px;
+}
+footer { text-align: center; padding: 28px; color: var(--muted); font-size: 12px; }
+@media(max-width: 680px) {
+  .grid { grid-template-columns: 1fr; }
+  header { padding: 15px 20px; }
+  main { margin-top: 24px; }
+  .card { padding: 18px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">🔐 Trust<span>Vault</span></div>
+    <div class="tag">Your documents. Your control.</div>
+  </div>
+  <button id="logout" class="secondary hidden">Log out</button>
+</header>
+
+<main>
+  <div id="message" class="notice hidden" role="status"></div>
+
+  <section id="auth">
+    <div style="max-width:480px;margin:35px auto">
+      <div class="card">
+        <span class="badge">SECURE DOCUMENT WORKSPACE</span>
+        <h1 style="margin-top:18px">Welcome to TrustVault.</h1>
+        <p class="muted">Manage your documents and control who can access them.</p>
+
+        <div class="row" style="margin:24px 0">
+          <button id="loginTab" style="flex:1">Log in</button>
+          <button id="registerTab" class="secondary" style="flex:1">Create account</button>
+        </div>
+
+        <form id="authForm" class="stack">
+          <div>
+            <label for="username">Username</label>
+            <input id="username" required minlength="3" maxlength="50"
+                   autocomplete="username" placeholder="Choose a username">
+          </div>
+          <div>
+            <label for="password">Password</label>
+            <input id="password" required type="password"
+                   autocomplete="current-password" placeholder="Enter your password">
+            <p id="passwordHint" class="muted" style="font-size:12px">
+              Enter your account password.
+            </p>
+          </div>
+          <button id="authSubmit" type="submit">Log in</button>
+        </form>
+      </div>
+      <p class="muted" style="text-align:center;font-size:12px">
+        Access is controlled by TrustVault's backend permissions.
+      </p>
+    </div>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <div class="row" style="margin-bottom:25px;flex-wrap:wrap">
+      <div>
+        <h1>Your document vault</h1>
+        <p class="muted">Welcome, <strong id="userLabel"></strong>.</p>
+      </div>
+      <button id="refresh" class="secondary">↻ Refresh</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="muted">Documents available to you</div>
+        <div id="docCount" class="stat">0</div>
+        <p class="muted" style="font-size:13px">Your files and documents shared with you.</p>
+      </div>
+      <div class="card">
+        <h2>Upload a document</h2>
+        <p class="muted" style="font-size:13px">
+          PDF, TXT, PNG or JPG · Maximum 5 MB.
+        </p>
+        <form id="uploadForm" class="stack">
+          <div>
+            <label for="file">Choose file</label>
+            <input id="file" name="file" type="file"
+                   accept=".pdf,.txt,.png,.jpg,.jpeg" required>
+          </div>
+          <div>
+            <label for="category">Category</label>
+            <select id="category">
+              <option>General</option>
+              <option>Academic</option>
+              <option>Personal</option>
+              <option>Work</option>
+              <option>Finance</option>
+            </select>
+          </div>
+          <button type="submit">↑ Upload document</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:22px">
+      <div class="row">
+        <h2>My documents</h2>
+        <span class="badge">Private by default</span>
+      </div>
+      <p class="muted" style="font-size:13px">
+        Download files or manage sharing for documents you own.
+      </p>
+      <div id="documents">
+        <p class="muted">Loading documents...</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>TrustVault · Secure document sharing with an audit trail</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+let mode = "login";
+let currentUser = null;
+
+function message(text, error = false) {
+  $("message").textContent = text;
+  $("message").classList.remove("hidden", "error");
+  if (error) $("message").classList.add("error");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function clearMessage() {
+  $("message").classList.add("hidden");
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: "same-origin",
+    ...options
+  });
+
+  const type = response.headers.get("content-type") || "";
+  const result = type.includes("application/json")
+    ? await response.json()
+    : await response.text();
+
+  if (!response.ok) {
+    const detail = result && typeof result === "object"
+      ? result.detail || result.message
+      : result;
+    throw new Error(detail || `Request failed (${response.status})`);
+  }
+  return result;
+}
+
+function setMode(nextMode) {
+  mode = nextMode;
+  $("loginTab").className = mode === "login" ? "" : "secondary";
+  $("registerTab").className = mode === "register" ? "" : "secondary";
+  $("authSubmit").textContent =
+    mode === "login" ? "Log in" : "Create account";
+  $("passwordHint").textContent = mode === "register"
+    ? "Use a password of at least 12 characters."
+    : "Enter your account password.";
+  $("password").autocomplete =
+    mode === "register" ? "new-password" : "current-password";
+}
+
+$("loginTab").addEventListener("click", () => setMode("login"));
+$("registerTab").addEventListener("click", () => setMode("register"));
+
+async function showDashboard(user) {
+  currentUser = user;
+  $("auth").classList.add("hidden");
+  $("dashboard").classList.remove("hidden");
+  $("logout").classList.remove("hidden");
+  $("userLabel").textContent = user.username;
+  clearMessage();
+  await loadDocuments();
+}
+
+function showLogin() {
+  currentUser = null;
+  $("dashboard").classList.add("hidden");
+  $("logout").classList.add("hidden");
+  $("auth").classList.remove("hidden");
+}
+
+$("authForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  clearMessage();
+
+  const username = $("username").value.trim();
+  const password = $("password").value;
+
+  if (mode === "register" && password.length < 12) {
+    message("Your password must contain at least 12 characters.", true);
+    return;
+  }
+
+  $("authSubmit").disabled = true;
+  try {
+    if (mode === "register") {
+      await api("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      message("Account created! Now log in with your new credentials.");
+      setMode("login");
+      $("password").value = "";
+    } else {
+      const result = await api("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      await showDashboard(result.user);
+    }
+  } catch (error) {
+    message(error.message, true);
+  } finally {
+    $("authSubmit").disabled = false;
+  }
+});
+
+async function loadDocuments() {
+  $("documents").textContent = "Loading documents...";
+  try {
+    const docs = await api("/documents/");
+    $("docCount").textContent = docs.length;
+    $("documents").replaceChildren();
+
+    if (!docs.length) {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "No documents yet. Upload your first file above.";
+      $("documents").append(empty);
+      return;
+    }
+
+    docs.forEach(doc => {
+      const item = document.createElement("div");
+      item.className = "file";
+
+      const info = document.createElement("div");
+      info.className = "row";
+      info.style.flexWrap = "wrap";
+
+      const details = document.createElement("div");
+      const name = document.createElement("div");
+      name.className = "file-name";
+      name.textContent = "📄 " + doc.name;
+
+      const category = document.createElement("div");
+      category.className = "muted";
+      category.style.fontSize = "12px";
+      category.textContent = doc.category + (doc.is_owner ? " · Owner" : " · Shared with you");
+
+      details.append(name, category);
+      info.append(details);
+
+      const actions = document.createElement("div");
+      actions.className = "row";
+      actions.style.flexWrap = "wrap";
+
+      const download = document.createElement("button");
+      download.className = "secondary small";
+      download.textContent = "Download";
+      download.addEventListener("click", () => downloadDocument(doc.id));
+
+      actions.append(download);
+
+      if (doc.is_owner) {
+        const share = document.createElement("button");
+        share.className = "small";
+        share.textContent = "Share";
+        share.addEventListener("click", () => shareDocument(doc.id));
+
+        const revoke = document.createElement("button");
+        revoke.className = "danger small";
+        revoke.textContent = "Revoke access";
+        revoke.addEventListener("click", () => revokeAccess(doc.id));
+
+        actions.append(share, revoke);
+      }
+
+      item.append(info, actions);
+      $("documents").append(item);
+    });
+  } catch (error) {
+    $("documents").textContent = "";
+    message(error.message, true);
+    if (error.message.toLowerCase().includes("log in")) showLogin();
+  }
+}
+
+$("uploadForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  clearMessage();
+  const file = $("file").files[0];
+
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    message("The file must be 5 MB or smaller.", true);
+    return;
+  }
+
+  const data = new FormData();
+  data.append("file", file);
+  data.append("category", $("category").value);
+
+  try {
+    await api("/documents/", { method: "POST", body: data });
+    $("uploadForm").reset();
+    message("Document uploaded successfully.");
+    await loadDocuments();
+  } catch (error) {
+    message(error.message, true);
+  }
+});
+
+async function downloadDocument(id) {
+  try {
+    const response = await fetch(`/documents/${id}/download`, {
+      credentials: "same-origin"
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.detail || "Download failed.");
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `document-${id}`;
+    link.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    message(error.message, true);
+  }
+}
+
+async function shareDocument(id) {
+  const username = prompt("Enter the existing user's username:");
+  if (!username || !username.trim()) return;
+
+  const canEdit = confirm(
+    "Give this user edit permission?\n\nOK = edit access\nCancel = read-only access"
+  );
+
+  try {
+    await api(`/documents/${id}/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: username.trim(),
+        can_read: true,
+        can_edit: canEdit
+      })
+    });
+    message("Document sharing permissions updated.");
+  } catch (error) {
+    message(error.message, true);
+  }
+}
+
+async function revokeAccess(id) {
+  const username = prompt("Enter the username whose access you want to revoke:");
+  if (!username || !username.trim()) return;
+  if (!confirm(`Revoke access for ${username.trim()}?`)) return;
+
+  try {
+    await api(`/documents/${id}/share/${encodeURIComponent(username.trim())}`, {
+      method: "DELETE"
+    });
+    message("Document access revoked.");
+  } catch (error) {
+    message(error.message, true);
+  }
+}
+
+$("refresh").addEventListener("click", loadDocuments);
+
+$("logout").addEventListener("click", async () => {
+  try {
+    await api("/logout", { method: "POST" });
+    showLogin();
+    $("authForm").reset();
+    message("You have logged out.");
+  } catch (error) {
+    message(error.message, true);
+  }
+});
+
+async function start() {
+  try {
+    const user = await api("/me");
+    await showDashboard(user);
+  } catch {
+    showLogin();
+  }
+}
+
+start();
+</script>
+</body>
+</html>

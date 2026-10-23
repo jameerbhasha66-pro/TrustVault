@@ -1,9 +1,12 @@
 
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -17,10 +20,15 @@ from documents import router as documents_router
 
 load_dotenv()
 
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+INDEX_FILE = STATIC_DIR / "index.html"
+
 SECRET_KEY = os.getenv("TRUSTVAULT_SECRET_KEY")
 if not SECRET_KEY:
     raise RuntimeError(
-        "TRUSTVAULT_SECRET_KEY is missing. Add it to your .env file."
+        "TRUSTVAULT_SECRET_KEY is missing. Add it to your .env file "
+        "or configure it in your deployment environment."
     )
 
 
@@ -36,7 +44,19 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# Serve the website's static files.
+if STATIC_DIR.is_dir():
+    app.mount(
+        "/static",
+        StaticFiles(directory=str(STATIC_DIR)),
+        name="static",
+    )
+
+# Keep the existing document API.
 app.include_router(documents_router)
+
+# Preserve the existing session configuration.
 app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET_KEY,
@@ -65,12 +85,15 @@ def public_user(user: User):
     }
 
 
-@app.get("/")
+# Display the website instead of a JSON status message.
+@app.get("/", include_in_schema=False)
 def home():
-    return {
-        "message": "Welcome to TrustVault",
-        "status": "running",
-    }
+    if not INDEX_FILE.is_file():
+        raise HTTPException(
+            status_code=500,
+            detail="Website file not found. Check that static/index.html exists.",
+        )
+    return FileResponse(str(INDEX_FILE), media_type="text/html")
 
 
 @app.get("/health")
@@ -107,7 +130,8 @@ def register(
     except IntegrityError:
         db.rollback()
         raise HTTPException(
-            status_code=409, detail="Username unavailable"
+            status_code=409,
+            detail="Username unavailable",
         )
 
     return public_user(user)
