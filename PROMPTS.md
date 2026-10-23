@@ -49,3 +49,12 @@ This document records AI assistance used during the development of TrustVault. E
 - **My decision:** Deny downloads unless the user is the document owner or has read permission. Keep the download audit event in the database before returning the file.
 - **Commit reference:** `4045150` — Add secure document downloads.
 
+## Entry 6 — 2026-10-23 — Document sharing and revocation
+
+- **Goal:** Allow document owners to grant and revoke access to other users.
+- **AI assistance requested:** Help implement document sharing, permission revocation, shared-document listing, and automated API tests.
+- **Output used:** Added endpoints to grant and revoke document permissions, updated document listing to include accessible shared documents, and added `tests/test_sharing.py`.
+- **Verification:** Manually verified sharing, recipient download, shared-document listing, and access revocation. The recipient received HTTP 403 after revocation. The full test suite passed: 7 tests passed, with one Starlette deprecation warning.
+- **My decision:** Keep sharing management restricted to document owners and preserve read/edit permissions.
+- **Commit reference:** Pending.
+
