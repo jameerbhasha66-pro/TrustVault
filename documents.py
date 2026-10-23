@@ -1,4 +1,3 @@
-import os
 import uuid
 from pathlib import Path
 
@@ -8,13 +7,14 @@ from fastapi import (
     HTTPException,
     UploadFile,
 )
+from fastapi.responses import FileResponse
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from authorization import get_current_user
 from database import get_db
-from models import AuditLog, Document, User
+from models import AuditLog, Document, Permission, User
+from authorization import can_read_document, get_current_user
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -156,3 +156,61 @@ def list_documents(
         }
         for document in documents
     ]
+@router.get("/{document_id}/download")
+def download_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    document = db.get(Document, document_id)
+
+    if document is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found",
+        )
+
+    permission = db.scalar(
+        select(Permission).where(
+            Permission.document_id == document.id,
+            Permission.user_id == current_user.id,
+        )
+    )
+
+    if not can_read_document(current_user, document, permission):
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have permission to download this document",
+        )
+
+    file_path = (UPLOAD_DIR / document.stored_filename).resolve()
+
+    if file_path.parent != UPLOAD_DIR or not file_path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Document file not found",
+        )
+
+    audit_event = AuditLog(
+        actor_id=current_user.id,
+        action="download",
+        document_id=document.id,
+        details=f"Downloaded document: {document.name}",
+    )
+
+    try:
+        db.add(audit_event)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Could not record the download audit event",
+        )
+
+    return FileResponse(
+        path=file_path,
+        filename=document.name,
+        media_type="application/octet-stream",
+    )
+    

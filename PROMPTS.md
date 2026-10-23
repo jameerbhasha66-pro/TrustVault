@@ -37,5 +37,14 @@ This document records AI assistance used during the development of TrustVault. E
 - **What went wrong:** The application initially failed to start because the router was defined after the upload route decorator.
 - **What I did instead:** Moved the router definition above the route decorators, restarted the application, uploaded a test document, and checked the audit database using `check_audit.py`.
 - **Verification:** Unauthenticated upload returned 401; an authenticated upload returned 201; document listing returned 200; the audit query showed an upload event for document ID 2; all six existing unit tests passed.
-- **Commit:** Pending.
+- **Commit:** `56754b6` — Add document upload and audit logging.
+## Entry 5 — 2026-10-23 — Secure document downloads
+
+- **Goal:** Add a download endpoint that enforces document-level access control and records successful download attempts.
+- **AI assistance requested:** Help implement a FastAPI download route that checks document ownership or read permission, returns appropriate HTTP errors, and records an audit event.
+- **Output used:** Added `GET /documents/{document_id}/download` in `documents.py`, using `can_read_document`, querying document permissions, validating the stored file path, recording a download audit event, and returning the file with `FileResponse`.
+- **Verification:** Unauthenticated download returned HTTP 401; the document owner downloaded document 2 successfully with HTTP 200; the ungranted user `viewer_test3` received HTTP 403. Python compilation succeeded, and all six existing authorization tests passed.
+- **Issues and corrections:** A temporary typo in the `pathlib` import prevented application startup and was corrected. The download route was then tested successfully.
+- **My decision:** Deny downloads unless the user is the document owner or has read permission. Keep the download audit event in the database before returning the file.
+- **Commit reference:** Pending.
 
