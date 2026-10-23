@@ -38,6 +38,7 @@ This document records AI assistance used during the development of TrustVault. E
 - **What I did instead:** Moved the router definition above the route decorators, restarted the application, uploaded a test document, and checked the audit database using `check_audit.py`.
 - **Verification:** Unauthenticated upload returned 401; an authenticated upload returned 201; document listing returned 200; the audit query showed an upload event for document ID 2; all six existing unit tests passed.
 - **Commit:** `56754b6` — Add document upload and audit logging.
+
 ## Entry 5 — 2026-10-23 — Secure document downloads
 
 - **Goal:** Add a download endpoint that enforces document-level access control and records successful download attempts.
@@ -46,5 +47,5 @@ This document records AI assistance used during the development of TrustVault. E
 - **Verification:** Unauthenticated download returned HTTP 401; the document owner downloaded document 2 successfully with HTTP 200; the ungranted user `viewer_test3` received HTTP 403. Python compilation succeeded, and all six existing authorization tests passed.
 - **Issues and corrections:** A temporary typo in the `pathlib` import prevented application startup and was corrected. The download route was then tested successfully.
 - **My decision:** Deny downloads unless the user is the document owner or has read permission. Keep the download audit event in the database before returning the file.
-- **Commit reference:** Pending.
+- **Commit reference:** `4045150` — Add secure document downloads.
 
