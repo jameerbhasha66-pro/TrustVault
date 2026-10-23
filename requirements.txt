@@ -1,2 +1,11 @@
+
 fastapi
 uvicorn[standard]
+sqlalchemy
+pwdlib[argon2]
+python-multipart
+itsdangerous
+jinja2
+python-dotenv
+pytest
+httpx
